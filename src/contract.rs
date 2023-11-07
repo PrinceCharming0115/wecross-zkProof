@@ -1,11 +1,13 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Timestamp};
+use cosmwasm_std::{
+    Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Timestamp, Uint128,
+};
 // use cw2::set_contract_version;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, ProofMsg, QueryMsg};
-use crate::state::{Epoch, Witness};
+use crate::state::{Epoch, Witness, CONFIG, EPOCHS};
 
 /*
 // version info for migration info
@@ -38,12 +40,16 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::VerifyProof(msg) => verify_proof(deps, msg, &info.sender.clone()),
+        ExecuteMsg::AddEpoch {
+            witness,
+            minimum_witness,
+        } => add_epoch(deps, env, witness, minimum_witness, info.sender.clone()),
     }
 }
 
@@ -74,6 +80,50 @@ pub fn verify_proof(
     // make sure the minimum requirement for witness is satisfied
 
     // Ensure for every signature in the sign, a expected witness exists from the database
+    Ok(Response::default())
+}
+
+// @dev - add epoch
+pub fn add_epoch(
+    deps: DepsMut,
+    env: Env,
+    witness: Vec<Witness>,
+    minimum_witness: Uint128,
+    sender: Addr,
+) -> Result<Response, ContractError> {
+    // load configs
+    let mut config = CONFIG.load(deps.storage)?;
+
+    // Check if sender is owner
+    if config.owner != sender {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    //Increment Epoch number
+    let new_epoch = config.current_epoch + Uint128::one();
+    // Create the new epoch
+    let epoch = Epoch {
+        id: new_epoch,
+        witness,
+        timestamp_start: env.block.time.nanos(),
+        timestamp_end: env.block.time.plus_days(1).nanos(),
+        minimum_witness_for_claim_creation: minimum_witness,
+    };
+
+    // Upsert the new epoch into memory
+    EPOCHS.update(
+        deps.storage,
+        new_epoch.into(),
+        // we check if epoch with same id already exists for safety
+        |existsting| match existsting {
+            None => Ok(epoch),
+            Some(..) => Err(ContractError::AlreadyExists {}),
+        },
+    )?;
+
+    // Save the new epoch
+    config.current_epoch = new_epoch;
+    CONFIG.save(deps.storage, &config)?;
     Ok(Response::default())
 }
 
