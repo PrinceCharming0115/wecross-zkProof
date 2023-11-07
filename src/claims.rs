@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, Timestamp, Uint128};
 
 #[cw_serde]
 pub struct ClaimInfo {
@@ -16,10 +16,10 @@ impl ClaimInfo {
 
 #[cw_serde]
 pub struct CompleteClaimData {
-    pub identifier: u32,
+    pub identifier: Uint128,
     pub owner: Addr,
-    pub epoch: i32,
-    pub timestamp_s: i32,
+    pub epoch: Uint128,
+    pub timestamp_s: Timestamp,
 }
 
 impl CompleteClaimData {

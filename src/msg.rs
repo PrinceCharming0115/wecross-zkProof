@@ -1,4 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::Uint128;
 
 use crate::claims::{ClaimInfo, SignedClaim};
 
@@ -6,7 +7,9 @@ use crate::claims::{ClaimInfo, SignedClaim};
 pub struct InstantiateMsg {}
 
 #[cw_serde]
-pub enum ExecuteMsg {}
+pub enum ExecuteMsg {
+    VerifyProof(ProofMsg),
+}
 
 #[cw_serde]
 #[derive(QueryResponses)]
