@@ -31,7 +31,7 @@ overflow-checks = true
 backtraces = ["cosmwasm-std/backtraces"]
 # use library feature to disable all instantiate/execute/query exports
 library = []
-default = ["vanilla"]
+default = ["secret"]
 secret = ["secret-std", "secret-toolkit"]
 vanilla = ["cosmwasm-std", "cw-storage-plus"]
 

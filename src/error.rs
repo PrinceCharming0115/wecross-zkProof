@@ -19,4 +19,6 @@ pub enum ContractError {
     HashMismatchErr {},
     #[error("Not enough witness")]
     WitnessMismatchErr {},
+    #[error("Cannot find")]
+    NotFoundErr {},
 }

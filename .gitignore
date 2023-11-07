@@ -14,4 +14,4 @@
 # IDEs
 *.iml
 .idea
-.wasm
+*.wasm
