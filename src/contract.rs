@@ -18,9 +18,10 @@ use {
 };
 // use cw2::set_contract_version;
 
-use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, ProofMsg, QueryMsg};
-use crate::state::{Config, Epoch, Witness};
+use crate::msg::{ExecuteMsg, GetEpochResponse, InstantiateMsg, ProofMsg, QueryMsg};
+use crate::state::{Epoch, Witness};
+use crate::{error::ContractError, msg::GetAllEpochResponse, state_vanilla::get_all_epochs};
+use cosmwasm_std::{to_binary, to_json_binary};
 use sha2::{Digest, Sha256};
 
 /*
@@ -185,9 +186,22 @@ pub fn add_epoch(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
-    unimplemented!()
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    match msg {
+        QueryMsg::GetEpoch { id } => to_json_binary(&query_epoch_id(deps, id)?),
+        QueryMsg::GetAllEpoch {} => to_json_binary(&query_all_epoch_ids(deps)?),
+    }
 }
 
+fn query_all_epoch_ids(deps: Deps) -> StdResult<GetAllEpochResponse> {
+    Ok(GetAllEpochResponse {
+        ids: get_all_epochs(deps.storage)?,
+    })
+}
+
+fn query_epoch_id(deps: Deps, id: u128) -> StdResult<GetEpochResponse> {
+    let data = EPOCHS.load(deps.storage, id)?;
+    Ok(GetEpochResponse { epoch: data })
+}
 #[cfg(test)]
 mod tests {}
