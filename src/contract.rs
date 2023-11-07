@@ -1,13 +1,26 @@
 #[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point;
-use cosmwasm_std::{
-    Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Timestamp, Uint128,
+#[cfg(feature = "vanilla")]
+use {
+    crate::state_vanilla::{CONFIG, EPOCHS},
+    cosmwasm_std::entry_point,
+    cosmwasm_std::{
+        Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Timestamp, Uint128,
+    },
+};
+
+#[cfg(feature = "secret")]
+use {
+    crate::state_secret::{CONFIG, EPOCHS},
+    secret_std::{
+        entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdError,
+        StdResult, Timestamp, Uint128,
+    },
 };
 // use cw2::set_contract_version;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, ProofMsg, QueryMsg};
-use crate::state::{Epoch, Witness, CONFIG, EPOCHS};
+use crate::state::{Config, Epoch, Witness};
 use sha2::{Digest, Sha256};
 
 /*
@@ -89,6 +102,7 @@ pub fn fetch_witness_for_claim(
     selected_witness
 }
 
+#[cfg(feature = "vanilla")]
 pub fn verify_proof(deps: DepsMut, msg: ProofMsg, env: Env) -> Result<Response, ContractError> {
     // Find the epoch from database
     let epoch = EPOCHS.load(deps.storage, msg.signed_claim.claim.epoch.into())?;
@@ -125,6 +139,7 @@ pub fn verify_proof(deps: DepsMut, msg: ProofMsg, env: Env) -> Result<Response, 
     Ok(Response::default())
 }
 
+#[cfg(feature = "vanilla")]
 // @dev - add epoch
 pub fn add_epoch(
     deps: DepsMut,

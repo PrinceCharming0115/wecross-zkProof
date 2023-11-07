@@ -1,10 +1,16 @@
-use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, CanonicalAddr, DepsMut, Uint128};
+use crate::ContractError;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
-use crate::ContractError;
+#[cfg(feature = "vanilla")]
+use cosmwasm_std::{Addr, CanonicalAddr, DepsMut, Uint128};
 
-#[cw_serde]
+#[cfg(feature = "secret")]
+use secret_std::{Addr, CanonicalAddr, DepsMut, Uint128};
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct ClaimInfo {
     pub provider: String,
     pub parameters: String,
@@ -24,7 +30,8 @@ impl ClaimInfo {
     }
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct CompleteClaimData {
     pub identifier: Vec<u8>,
     pub owner: Addr,
@@ -45,7 +52,8 @@ impl CompleteClaimData {
     }
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct SignedClaim {
     pub claim: CompleteClaimData,
     pub bytes: Vec<[u8; 1]>,
