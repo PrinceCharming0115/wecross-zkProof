@@ -9,35 +9,44 @@ use {
     },
 };
 
+// use cw2::set_contract_version;
 #[cfg(feature = "secret")]
 use {
     crate::state_secret::{CONFIG, EPOCHS},
     secret_std::{
-        entry_point, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response,
-        StdError, StdResult, Timestamp, Uint128,
+        entry_point, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError,
+        StdResult, Timestamp, Uint128,
     },
 };
-// use cw2::set_contract_version;
 
-use crate::msg::{ExecuteMsg, GetEpochResponse, InstantiateMsg, ProofMsg, QueryMsg};
 use crate::state::{Epoch, Witness};
 use crate::{error::ContractError, msg::GetAllEpochResponse};
+use crate::{
+    msg::{ExecuteMsg, GetEpochResponse, InstantiateMsg, ProofMsg, QueryMsg},
+    state::Config,
+};
 use sha2::{Digest, Sha256};
 
-/*
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:reclaim-cosmwasm";
-const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-*/
+// const CONTRACT_NAME: &str = "crates.io:reclaim-cosmwasm";
+// const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    _msg: InstantiateMsg,
+    msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-    unimplemented!()
+    let addr = deps.api.addr_validate(&msg.owner)?;
+    let config = Config {
+        owner: addr,
+        current_epoch: Uint128::zero(),
+    };
+
+    CONFIG.save(deps.storage, &config)?;
+
+    Ok(Response::default())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
