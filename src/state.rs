@@ -1,7 +1,7 @@
 use std::u128;
 
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Timestamp, Uint128};
+use cosmwasm_std::{Addr, Uint128};
 
 #[cw_serde]
 pub struct Config {
@@ -13,6 +13,16 @@ pub struct Config {
 pub struct Witness {
     pub address: Addr,
     pub host: String,
+}
+
+impl Witness {
+    pub fn get_addresses(witness: Vec<Witness>) -> Vec<Addr> {
+        let mut vec_addresses = vec![];
+        for wit in witness {
+            vec_addresses.push(wit.address);
+        }
+        return vec_addresses;
+    }
 }
 
 #[cw_serde]

@@ -1,6 +1,8 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, CanonicalAddr, DepsMut, RecoverPubkeyError, Uint128};
+use cosmwasm_std::{Addr, CanonicalAddr, DepsMut, Uint128};
 use sha2::{Digest, Sha256};
+
+use crate::ContractError;
 
 #[cw_serde]
 pub struct ClaimInfo {
@@ -12,11 +14,10 @@ pub struct ClaimInfo {
 impl ClaimInfo {
     pub fn hash(&self) -> Vec<u8> {
         let mut hasher = Sha256::new();
-        let mut hash_str = String::from(&self.provider);
-        hash_str.push_str("\n");
-        hash_str.push_str(&self.parameters);
-        hash_str.push_str("\n");
-        hash_str.push_str(&self.context);
+        let hash_str = format!(
+            "{}\n{}\n{}",
+            &self.provider, &self.parameters, &self.context
+        );
         hasher.update(hash_str.as_bytes().to_vec());
         let result = hasher.finalize().to_vec();
         return result;
@@ -25,7 +26,7 @@ impl ClaimInfo {
 
 #[cw_serde]
 pub struct CompleteClaimData {
-    pub identifier: Uint128,
+    pub identifier: Vec<u8>,
     pub owner: Addr,
     pub epoch: Uint128,
     pub timestamp_s: u64,
@@ -33,13 +34,13 @@ pub struct CompleteClaimData {
 
 impl CompleteClaimData {
     pub fn serialise(&self) -> Vec<u8> {
-        let mut hash_str = String::from(self.identifier);
-        hash_str.push_str("\n");
-        hash_str.push_str(&self.owner.to_string());
-        hash_str.push_str("\n");
-        hash_str.push_str(&self.timestamp_s.to_string());
-        hash_str.push_str("\n");
-        hash_str.push_str(&self.epoch.to_string());
+        let hash_str = format!(
+            "{}\n{}\n{}\n{}",
+            hex::encode(&self.identifier),
+            &self.owner.to_string(),
+            &self.timestamp_s.to_string(),
+            &self.epoch.to_string()
+        );
         hash_str.as_bytes().to_vec()
     }
 }
@@ -54,7 +55,7 @@ impl SignedClaim {
     pub fn recover_signers_of_signed_claim(
         self,
         deps: DepsMut,
-    ) -> Result<Vec<Addr>, RecoverPubkeyError> {
+    ) -> Result<Vec<Addr>, ContractError> {
         // Create empty array
         let mut expected = vec![];
         // Hash the signature
@@ -66,13 +67,16 @@ impl SignedClaim {
         // For each signature in the claim
         for signature in self.bytes {
             // Recover the public key
-            let pubkey = deps.api.secp256k1_recover_pubkey(&result, &signature, 0)?;
-            // Convert public key to human readable addr
-            let canonical_addr = CanonicalAddr::from(pubkey);
-            let addr = deps.api.addr_humanize(&canonical_addr);
-            match addr {
-                Ok(address) => expected.push(address),
-                Err(..) => return Err(RecoverPubkeyError::InvalidHashFormat),
+            let pubkey = deps.api.secp256k1_recover_pubkey(&result, &signature, 0);
+            match pubkey {
+                Ok(key) => {
+                    // Convert public key to human readable addr
+                    let canonical_addr = CanonicalAddr::from(key);
+                    let addr = deps.api.addr_humanize(&canonical_addr)?;
+                    expected.push(addr)
+                }
+                // optimise: better error enums
+                Err(..) => return Err(ContractError::PubKeyErr {}),
             }
         }
         Ok(expected)

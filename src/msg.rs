@@ -3,7 +3,7 @@ use cosmwasm_std::Uint128;
 
 use crate::{
     claims::{ClaimInfo, SignedClaim},
-    state::{Epoch, Witness},
+    state::Witness,
 };
 
 #[cw_serde]
