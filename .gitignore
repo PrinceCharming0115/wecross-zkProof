@@ -19,3 +19,6 @@
 
 # node
 /node/node_modules
+
+# env
+.env
