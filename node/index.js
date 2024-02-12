@@ -45,10 +45,9 @@ let upload_contract = async () => {
 upload_contract();
 
 let instantiate_contract = async () => {
-    // Create an instance of the Counter contract, providing a starting count
     const instantiateMsg = { owner: owner };
-    const codeId = 3997
-    const contractCodeHash = "3a9c6ac3d954fe86a980b8fc02b0914f57113d06660e52b03d527ef3300025ea"
+    const codeId = 4143
+    const contractCodeHash = "31664dde7695fa36fb2f5c41247342eb44d1781c39ed2153c667e5039212a26e"
     let tx = await secretjs.tx.compute.instantiateContract(
       {
         code_id: codeId,

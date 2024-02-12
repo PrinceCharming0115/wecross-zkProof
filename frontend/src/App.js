@@ -14,7 +14,7 @@ function App() {
         }}
         signedClaim={{
           "claim": {
-            "epoch": 2,
+            "epoch": "2",
             "identifier": "0xafb5c7415e79bbf42b122d3c0d02d7b8da9deb04df933b95318b57483d587ae3",
             "owner": "0xdFb1dCADeeEC3273Fb2C50563312D1d5f7347615",
             "timestamp_s": "1697188555"

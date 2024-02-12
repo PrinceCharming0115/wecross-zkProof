@@ -4,10 +4,10 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 #[cfg(feature = "vanilla")]
-use cosmwasm_std::{Addr, CanonicalAddr, DepsMut, Uint128};
+use cosmwasm_std::{Addr, CanonicalAddr, DepsMut};
 
 #[cfg(feature = "secret")]
-use secret_std::{Addr, CanonicalAddr, DepsMut, Uint128};
+use secret_std::{Addr, CanonicalAddr, DepsMut};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -35,7 +35,7 @@ impl ClaimInfo {
 pub struct CompleteClaimData {
     pub identifier: Vec<u8>,
     pub owner: Addr,
-    pub epoch: Uint128,
+    pub epoch: u64,
     pub timestamp_s: u64,
 }
 
@@ -56,7 +56,7 @@ impl CompleteClaimData {
 #[serde(rename_all = "snake_case")]
 pub struct SignedClaim {
     pub claim: CompleteClaimData,
-    pub bytes: Vec<[u8; 1]>,
+    pub bytes: Vec<Vec<u8>>,
 }
 
 impl SignedClaim {
