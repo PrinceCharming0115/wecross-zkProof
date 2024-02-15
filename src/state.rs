@@ -17,12 +17,12 @@ pub struct Config {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct Witness {
-    pub address: Addr,
+    pub address: String,
     pub host: String,
 }
 
 impl Witness {
-    pub fn get_addresses(witness: Vec<Witness>) -> Vec<Addr> {
+    pub fn get_addresses(witness: Vec<Witness>) -> Vec<String> {
         let mut vec_addresses = vec![];
         for wit in witness {
             vec_addresses.push(wit.address);

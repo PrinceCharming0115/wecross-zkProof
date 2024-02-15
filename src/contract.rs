@@ -133,7 +133,7 @@ pub fn verify_proof(deps: DepsMut, msg: ProofMsg, env: Env) -> Result<Response, 
     let expected_witness_addresses = Witness::get_addresses(expected_witness);
 
     // recover witness address from SignedClaims Object
-    let signed_witness = msg.signed_claim.recover_signers_of_signed_claim(deps)?;
+    let signed_witness = msg.signed_claim.recover_signers_of_signed_claim(deps);
 
     // make sure the minimum requirement for witness is satisfied
     if expected_witness_addresses.len() != signed_witness.len() {
@@ -172,7 +172,7 @@ pub fn verify_proof(deps: DepsMut, msg: ProofMsg, env: Env) -> Result<Response, 
             let expected_witness_addresses = Witness::get_addresses(expected_witness);
 
             // recover witness address from SignedClaims Object
-            let signed_witness = msg.signed_claim.recover_signers_of_signed_claim(deps)?;
+            let signed_witness = msg.signed_claim.recover_signers_of_signed_claim(deps);
 
             // make sure the minimum requirement for witness is satisfied
             if expected_witness_addresses.len() != signed_witness.len() {
@@ -291,6 +291,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetEpoch { id } => to_binary(&query_epoch_id(deps, id)?),
         QueryMsg::GetAllEpoch {} => to_binary(&query_all_epoch_ids(deps)?),
+        QueryMsg::GetOwner {} => to_binary(&query_owner(deps)?),
     }
 }
 
@@ -342,9 +343,15 @@ fn query_owner(deps: Deps) -> StdResult<GetOwnerResponse> {
 
 #[cfg(test)]
 mod tests {
+    use crate::claims::{ClaimInfo, CompleteClaimData, SignedClaim};
+
     use super::*;
     use cosmwasm_std::{from_json, testing::*};
     use cosmwasm_std::{Coin, Uint128};
+    use k256::ecdsa::{SigningKey, VerifyingKey};
+    use keccak_hash::keccak256;
+    use rand_core::OsRng;
+
     #[test]
 
     fn proper_initialization() {
@@ -360,7 +367,6 @@ mod tests {
         );
 
         let owner = info.clone().sender.into_string();
-        dbg!(&owner);
         let init_msg = InstantiateMsg {
             owner: owner.clone(),
         };
@@ -374,5 +380,116 @@ mod tests {
         let res = query(deps.as_ref(), mock_env(), QueryMsg::GetOwner {}).unwrap();
         let value: GetOwnerResponse = from_json(&res).unwrap();
         assert_eq!(owner, value.owner);
+    }
+
+    #[test]
+    fn epoch_insertion() {
+        let mut deps = mock_dependencies();
+        let mock_api = MockApi::default().with_prefix("secret1");
+        let owner_addr = mock_api.addr_make("owner");
+        let info = mock_info(
+            owner_addr.to_string().as_str(),
+            &[Coin {
+                denom: "earth".to_string(),
+                amount: Uint128::new(1000),
+            }],
+        );
+
+        let owner = info.clone().sender.into_string();
+        let init_msg = InstantiateMsg {
+            owner: owner.clone(),
+        };
+
+        let signing_key = SigningKey::random(&mut OsRng);
+        let verifying_key = VerifyingKey::from(&signing_key);
+        let str_verifying_key = format!("{:?}", verifying_key);
+
+        let witness: Witness = Witness {
+            address: str_verifying_key,
+            host: "https://".to_string(),
+        };
+        let mut witness_vec = Vec::new();
+        witness_vec.push(witness);
+        instantiate(deps.as_mut(), mock_env(), info.clone(), init_msg).unwrap();
+        let execute_msg = ExecuteMsg::AddEpoch {
+            witness: witness_vec,
+            minimum_witness: Uint128::new(1),
+        };
+        let res = execute(deps.as_mut(), mock_env(), info, execute_msg).unwrap();
+        assert_eq!(0, res.messages.len());
+        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetEpoch { id: 1 }).unwrap();
+        let value: GetEpochResponse = from_json(&res).unwrap();
+        assert_eq!(Uint128::from(1_u128), value.epoch.id)
+    }
+
+    #[test]
+    fn proof_verification() {
+        let mut deps = mock_dependencies();
+        let mock_api = MockApi::default().with_prefix("secret1");
+        let owner_addr = mock_api.addr_make("owner");
+        let info = mock_info(
+            owner_addr.to_string().as_str(),
+            &[Coin {
+                denom: "earth".to_string(),
+                amount: Uint128::new(1000),
+            }],
+        );
+
+        let owner = info.clone().sender.into_string();
+        let init_msg = InstantiateMsg {
+            owner: owner.clone(),
+        };
+
+        let signing_key = SigningKey::random(&mut OsRng);
+        let verifying_key = VerifyingKey::from(&signing_key);
+        let str_verifying_key = format!("{:?}", verifying_key);
+
+        let witness: Witness = Witness {
+            address: str_verifying_key.clone(),
+            host: "https://".to_string(),
+        };
+        let mut witness_vec = Vec::new();
+        witness_vec.push(witness);
+        instantiate(deps.as_mut(), mock_env(), info.clone(), init_msg).unwrap();
+        let add_epoch_msg = ExecuteMsg::AddEpoch {
+            witness: witness_vec,
+            minimum_witness: Uint128::new(1),
+        };
+        execute(deps.as_mut(), mock_env(), info.clone(), add_epoch_msg).unwrap();
+        let claim_info = ClaimInfo {
+            provider: "provider".to_owned(),
+            parameters: "".to_owned(),
+            context: "{}".to_owned(),
+        };
+        let hashed = claim_info.hash();
+        let now = mock_env().block.time.seconds();
+        let complete_claim_data = CompleteClaimData {
+            identifier: hashed,
+            owner: str_verifying_key,
+            epoch: 1_u64,
+            timestamp_s: now,
+        };
+        let mut hasher = Sha256::new();
+        let serialised_claim = complete_claim_data.serialise();
+        hasher.update(serialised_claim);
+        let mut result = hasher.finalize().to_vec();
+        keccak256(&mut result);
+        let mut sigs = Vec::new();
+        let (signature, recid) = signing_key.sign_prehash_recoverable(&result).unwrap();
+        let str_signature = format!("{:?}", signature);
+
+        let recid_8: u8 = recid.try_into().unwrap();
+        sigs.push((str_signature, recid_8));
+        let signed_claim = SignedClaim {
+            claim: complete_claim_data,
+            bytes: sigs,
+        };
+        let verify_proof_msg = ProofMsg {
+            claim_info: claim_info,
+            signed_claim: signed_claim,
+        };
+        let execute_msg = ExecuteMsg::VerifyProof(verify_proof_msg);
+        let res = execute(deps.as_mut(), mock_env(), info, execute_msg).unwrap();
+        assert_eq!(0, res.messages.len());
     }
 }

@@ -1,13 +1,15 @@
-use crate::ContractError;
+use ecdsa::RecoveryId;
+use k256::ecdsa::{Signature, VerifyingKey};
+use keccak_hash::keccak256;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 #[cfg(feature = "vanilla")]
-use cosmwasm_std::{Addr, CanonicalAddr, DepsMut};
+use cosmwasm_std::DepsMut;
 
 #[cfg(feature = "secret")]
-use secret_std::{Addr, CanonicalAddr, DepsMut};
+use secret_std::DepsMut;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -34,7 +36,7 @@ impl ClaimInfo {
 #[serde(rename_all = "snake_case")]
 pub struct CompleteClaimData {
     pub identifier: Vec<u8>,
-    pub owner: Addr,
+    pub owner: String,
     pub epoch: u64,
     pub timestamp_s: u64,
 }
@@ -56,37 +58,44 @@ impl CompleteClaimData {
 #[serde(rename_all = "snake_case")]
 pub struct SignedClaim {
     pub claim: CompleteClaimData,
-    pub bytes: Vec<Vec<u8>>,
+    pub bytes: Vec<(String, u8)>,
 }
 
 impl SignedClaim {
-    pub fn recover_signers_of_signed_claim(
-        self,
-        deps: DepsMut,
-    ) -> Result<Vec<Addr>, ContractError> {
+    pub fn recover_signers_of_signed_claim(self, _deps: DepsMut) -> Vec<String> {
         // Create empty array
         let mut expected = vec![];
         // Hash the signature
         let mut hasher = Sha256::new();
         let serialised_claim = self.claim.serialise();
         hasher.update(serialised_claim);
-        let result = hasher.finalize().to_vec();
+        let mut result = hasher.finalize().to_vec();
+        keccak256(&mut result);
 
-        // For each signature in the claim
-        for signature in self.bytes {
-            // Recover the public key
-            let pubkey = deps.api.secp256k1_recover_pubkey(&result, &signature, 0);
-            match pubkey {
-                Ok(key) => {
-                    // Convert public key to human readable addr
-                    let canonical_addr = CanonicalAddr::from(key);
-                    let addr = deps.api.addr_humanize(&canonical_addr)?;
-                    expected.push(addr)
-                }
-                // optimise: better error enums
-                Err(..) => return Err(ContractError::PubKeyErr {}),
-            }
+        for (signature, recid_8) in self.bytes {
+            let arr = Self::recover_raw_signature(signature);
+            let slice_arr = arr.as_slice();
+            let sig = Signature::try_from(slice_arr).unwrap();
+            let recid = RecoveryId::try_from(recid_8).unwrap();
+            let recovered_key = VerifyingKey::recover_from_prehash(&result, &sig, recid).unwrap();
+
+            let str_recovered_key = format!("{:?}", recovered_key);
+            expected.push(str_recovered_key);
         }
-        Ok(expected)
+
+        expected
+    }
+
+    pub fn recover_raw_signature(signature: String) -> [u8; 64] {
+        let ss = signature.as_str();
+        let sss = &ss[28..156].to_lowercase();
+        let sss_str = sss.as_str();
+        let mut arr = [0_u8; 64];
+        for i in 0..64 {
+            let ss = &sss_str[(2 * i)..(2 * i + 2)];
+            let z = u8::from_str_radix(ss, 16).unwrap();
+            arr[i] = z;
+        }
+        arr
     }
 }

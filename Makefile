@@ -14,6 +14,7 @@ vanilla:
 	RUSTFLAGS='-C link-arg=-s' cargo build --release --target wasm32-unknown-unknown --no-default-features --features vanilla
 	cp target/wasm32-unknown-unknown/release/reclaim_cosmwasm.wasm reclaim_cosmwasm.wasm
 
-
+test:
+	cargo test
 clean:
 	cargo clean
