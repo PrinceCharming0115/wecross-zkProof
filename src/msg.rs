@@ -33,6 +33,7 @@ pub enum ExecuteMsg {
 pub enum QueryMsg {
     GetAllEpoch {},
     GetEpoch { id: u128 },
+    GetOwner {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -45,6 +46,12 @@ pub struct GetAllEpochResponse {
 #[serde(rename_all = "snake_case")]
 pub struct GetEpochResponse {
     pub epoch: Epoch,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct GetOwnerResponse {
+    pub owner: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

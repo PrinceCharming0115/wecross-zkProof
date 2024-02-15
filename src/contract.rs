@@ -22,7 +22,7 @@ use {
 use crate::state::{Epoch, Witness};
 use crate::{error::ContractError, msg::GetAllEpochResponse};
 use crate::{
-    msg::{ExecuteMsg, GetEpochResponse, InstantiateMsg, ProofMsg, QueryMsg},
+    msg::{ExecuteMsg, GetEpochResponse, GetOwnerResponse, InstantiateMsg, ProofMsg, QueryMsg},
     state::Config,
 };
 use sha2::{Digest, Sha256};
@@ -281,6 +281,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetEpoch { id } => to_json_binary(&query_epoch_id(deps, id)?),
         QueryMsg::GetAllEpoch {} => to_json_binary(&query_all_epoch_ids(deps)?),
+        QueryMsg::GetOwner {} => to_json_binary(&query_owner(deps)?),
     }
 }
 
@@ -306,6 +307,14 @@ fn query_epoch_id(deps: Deps, id: u128) -> StdResult<GetEpochResponse> {
     Ok(GetEpochResponse { epoch: data })
 }
 
+#[cfg(feature = "vanilla")]
+fn query_owner(deps: Deps) -> StdResult<GetOwnerResponse> {
+    let config = CONFIG.load(deps.storage)?;
+    Ok(GetOwnerResponse {
+        owner: config.owner.to_string(),
+    })
+}
+
 //NOTE: Unimplemented as secret doesn't allow to iterate via keys
 #[cfg(feature = "secret")]
 fn query_all_epoch_ids(_deps: Deps) -> StdResult<GetAllEpochResponse> {
@@ -322,5 +331,48 @@ fn query_epoch_id(deps: Deps, id: u128) -> StdResult<GetEpochResponse> {
         }),
     }
 }
+
+#[cfg(feature = "secret")]
+fn query_owner(deps: Deps) -> StdResult<GetOwnerResponse> {
+    let config = CONFIG.load(deps.storage)?;
+    Ok(GetOwnerResponse {
+        owner: config.owner.to_string(),
+    })
+}
+
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use super::*;
+    use cosmwasm_std::{from_json, testing::*};
+    use cosmwasm_std::{Coin, Uint128};
+    #[test]
+
+    fn proper_initialization() {
+        let mut deps = mock_dependencies();
+        let mock_api = MockApi::default().with_prefix("secret1");
+
+        let info = mock_info(
+            mock_api.addr_make("owner").to_string().as_str(),
+            &[Coin {
+                denom: "earth".to_string(),
+                amount: Uint128::new(1000),
+            }],
+        );
+
+        let owner = info.clone().sender.into_string();
+        dbg!(&owner);
+        let init_msg = InstantiateMsg {
+            owner: owner.clone(),
+        };
+
+        // we can just call .unwrap() to assert this was a success
+        let res = instantiate(deps.as_mut(), mock_env(), info, init_msg).unwrap();
+
+        assert_eq!(0, res.messages.len());
+
+        // it worked, let's query the state
+        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetOwner {}).unwrap();
+        let value: GetOwnerResponse = from_json(&res).unwrap();
+        assert_eq!(owner, value.owner);
+    }
+}
