@@ -20,6 +20,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a4668cab20f66d8d020e1fbc0ebe47217433c1b6c8f2040faf858554e394ace6"
 
 [[package]]
+name = "base16"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d27c3610c36aee21ce8ac510e6224498de4228ad772a171ed65643a24693a5a8"
+
+[[package]]
 name = "base16ct"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -719,6 +725,7 @@ dependencies = [
 name = "reclaim-cosmwasm"
 version = "0.1.0"
 dependencies = [
+ "base16",
  "cosmwasm-std",
  "cw-multi-test",
  "cw-storage-plus",

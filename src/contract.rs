@@ -442,20 +442,23 @@ mod tests {
 
         let signing_key = SigningKey::random(&mut OsRng);
         let verifying_key = VerifyingKey::from(&signing_key);
-        let str_verifying_key = format!("{:?}", verifying_key);
+        let enc_key = base16::encode_lower(&verifying_key.to_sec1_bytes());
 
         let witness: Witness = Witness {
-            address: str_verifying_key.clone(),
+            address: enc_key.clone(),
             host: "https://".to_string(),
         };
         let mut witness_vec = Vec::new();
         witness_vec.push(witness);
+
         instantiate(deps.as_mut(), mock_env(), info.clone(), init_msg).unwrap();
+
         let add_epoch_msg = ExecuteMsg::AddEpoch {
             witness: witness_vec,
             minimum_witness: Uint128::new(1),
         };
         execute(deps.as_mut(), mock_env(), info.clone(), add_epoch_msg).unwrap();
+
         let claim_info = ClaimInfo {
             provider: "provider".to_owned(),
             parameters: "".to_owned(),
@@ -465,21 +468,24 @@ mod tests {
         let now = mock_env().block.time.seconds();
         let complete_claim_data = CompleteClaimData {
             identifier: hashed,
-            owner: str_verifying_key,
+            owner: enc_key,
             epoch: 1_u64,
             timestamp_s: now,
         };
+
         let mut hasher = Sha256::new();
         let serialised_claim = complete_claim_data.serialise();
         hasher.update(serialised_claim);
         let mut result = hasher.finalize().to_vec();
         keccak256(&mut result);
+
         let mut sigs = Vec::new();
         let (signature, recid) = signing_key.sign_prehash_recoverable(&result).unwrap();
-        let str_signature = format!("{:?}", signature);
-
+        let enc = base16::encode_lower(&signature.to_bytes());
+        let dec = base16::decode(enc.as_bytes()).unwrap();
         let recid_8: u8 = recid.try_into().unwrap();
-        sigs.push((str_signature, recid_8));
+        sigs.push((dec, recid_8));
+
         let signed_claim = SignedClaim {
             claim: complete_claim_data,
             bytes: sigs,

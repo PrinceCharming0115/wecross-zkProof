@@ -58,7 +58,7 @@ impl CompleteClaimData {
 #[serde(rename_all = "snake_case")]
 pub struct SignedClaim {
     pub claim: CompleteClaimData,
-    pub bytes: Vec<(String, u8)>,
+    pub bytes: Vec<(Vec<u8>, u8)>,
 }
 
 impl SignedClaim {
@@ -72,14 +72,13 @@ impl SignedClaim {
         let mut result = hasher.finalize().to_vec();
         keccak256(&mut result);
 
-        for (signature, recid_8) in self.bytes {
-            let arr = Self::recover_raw_signature(signature);
-            let slice_arr = arr.as_slice();
-            let sig = Signature::try_from(slice_arr).unwrap();
+        for (sig, recid_8) in self.bytes {
+            let signature = Signature::from_slice(&sig).unwrap();
             let recid = RecoveryId::try_from(recid_8).unwrap();
-            let recovered_key = VerifyingKey::recover_from_prehash(&result, &sig, recid).unwrap();
+            let recovered_key =
+                VerifyingKey::recover_from_prehash(&result, &signature, recid).unwrap();
 
-            let str_recovered_key = format!("{:?}", recovered_key);
+            let str_recovered_key = base16::encode_lower(&recovered_key.to_sec1_bytes());
             expected.push(str_recovered_key);
         }
 
