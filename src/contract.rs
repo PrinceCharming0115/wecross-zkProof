@@ -98,7 +98,7 @@ pub fn fetch_witness_for_claim(
     let witenesses_left_list = epoch.witness;
     let mut byte_offset = 0;
     let witness_left = witenesses_left_list.len();
-    for _i in 0..epoch.minimum_witness_for_claim_creation.into() {
+    for _i in 0..epoch.minimum_witness_for_claim_creation {
         let random_seed = generate_random_seed(hash_result.clone(), byte_offset) as usize;
         let witness_index = random_seed % witness_left;
         let witness = witenesses_left_list.get(witness_index);
@@ -198,7 +198,7 @@ pub fn add_epoch(
     deps: DepsMut,
     env: Env,
     witness: Vec<Witness>,
-    minimum_witness: Uint128,
+    minimum_witness: u64,
     sender: Addr,
 ) -> Result<Response, ContractError> {
     // load configs
@@ -243,7 +243,7 @@ pub fn add_epoch(
     deps: DepsMut,
     env: Env,
     witness: Vec<Witness>,
-    minimum_witness: Uint128,
+    minimum_witness: u64,
     sender: Addr,
 ) -> Result<Response, ContractError> {
     // load configs
@@ -413,7 +413,7 @@ mod tests {
         instantiate(deps.as_mut(), mock_env(), info.clone(), init_msg).unwrap();
         let execute_msg = ExecuteMsg::AddEpoch {
             witness: witness_vec,
-            minimum_witness: Uint128::new(1),
+            minimum_witness: 1_u64,
         };
         let res = execute(deps.as_mut(), mock_env(), info, execute_msg).unwrap();
         assert_eq!(0, res.messages.len());
@@ -442,7 +442,8 @@ mod tests {
 
         let signing_key = SigningKey::random(&mut OsRng);
         let verifying_key = VerifyingKey::from(&signing_key);
-        let enc_key = base16::encode_lower(&verifying_key.to_sec1_bytes());
+        let mut enc_key = base16::encode_lower(&verifying_key.to_sec1_bytes()).split_off(26);
+        enc_key.insert_str(0, "0x");
 
         let witness: Witness = Witness {
             address: enc_key.clone(),
@@ -455,7 +456,7 @@ mod tests {
 
         let add_epoch_msg = ExecuteMsg::AddEpoch {
             witness: witness_vec,
-            minimum_witness: Uint128::new(1),
+            minimum_witness: 1_u64,
         };
         execute(deps.as_mut(), mock_env(), info.clone(), add_epoch_msg).unwrap();
 
@@ -482,14 +483,16 @@ mod tests {
         let mut sigs = Vec::new();
         let (signature, recid) = signing_key.sign_prehash_recoverable(&result).unwrap();
         let enc = base16::encode_lower(&signature.to_bytes());
+        dbg!(&enc);
         let dec = base16::decode(enc.as_bytes()).unwrap();
         let recid_8: u8 = recid.try_into().unwrap();
         sigs.push((dec, recid_8));
 
         let signed_claim = SignedClaim {
             claim: complete_claim_data,
-            bytes: sigs,
+            signatures: sigs,
         };
+        dbg!(&signed_claim);
         let verify_proof_msg = ProofMsg {
             claim_info: claim_info,
             signed_claim: signed_claim,

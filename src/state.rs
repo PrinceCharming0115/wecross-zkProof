@@ -37,6 +37,6 @@ pub struct Epoch {
     pub id: Uint128,
     pub timestamp_start: u64,
     pub timestamp_end: u64,
-    pub minimum_witness_for_claim_creation: Uint128,
+    pub minimum_witness_for_claim_creation: u64,
     pub witness: Vec<Witness>,
 }

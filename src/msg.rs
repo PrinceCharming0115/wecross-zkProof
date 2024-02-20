@@ -1,12 +1,6 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "vanilla")]
-use cosmwasm_std::Uint128;
-
-#[cfg(feature = "secret")]
-use secret_std::Uint128;
-
 use crate::{
     claims::{ClaimInfo, SignedClaim},
     state::{Epoch, Witness},
@@ -24,7 +18,7 @@ pub enum ExecuteMsg {
     VerifyProof(ProofMsg),
     AddEpoch {
         witness: Vec<Witness>,
-        minimum_witness: Uint128,
+        minimum_witness: u64,
     },
 }
 
