@@ -6,13 +6,13 @@ dotenv.config();
 const wallet = new Wallet(process.env.MNEMONIC);
 const contract_wasm = fs.readFileSync("../reclaim_cosmwasm.wasm.gz");
 
+console.log(contract_wasm.byteLength)
 const secretjs = new SecretNetworkClient({
     chainId: "pulsar-3",
     url: "https://api.pulsar.scrttestnet.com",
     wallet: wallet,
     walletAddress: wallet.address,
 });
-
 
 let upload_contract = async () => {
     let tx = await secretjs.tx.compute.storeCode(

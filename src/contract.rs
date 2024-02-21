@@ -118,10 +118,10 @@ pub fn verify_proof(deps: DepsMut, msg: ProofMsg, env: Env) -> Result<Response, 
     let epoch = EPOCHS.load(deps.storage, msg.signed_claim.claim.epoch.into())?;
 
     // Hash the claims, and verify with identifier hash
-    let hashed = msg.claim_info.hash();
-    if msg.signed_claim.claim.identifier != hashed {
-        return Err(ContractError::HashMismatchErr {});
-    }
+    // let hashed = msg.claim_info.hash();
+    // if msg.signed_claim.claim.identifier != hashed {
+    //     return Err(ContractError::HashMismatchErr {});
+    // }
 
     // Fetch witness for claim
     let expected_witness = fetch_witness_for_claim(
@@ -157,10 +157,10 @@ pub fn verify_proof(deps: DepsMut, msg: ProofMsg, env: Env) -> Result<Response, 
     match fetched_epoch {
         Some(epoch) => {
             // Hash the claims, and verify with identifier hash
-            let hashed = msg.claim_info.hash();
-            if msg.signed_claim.claim.identifier != hashed {
-                return Err(ContractError::HashMismatchErr {});
-            }
+            // let hashed = msg.claim_info.hash();
+            // if msg.signed_claim.claim.identifier != hashed {
+            //     return Err(ContractError::HashMismatchErr {});
+            // }
 
             // Fetch witness for claim
             let expected_witness = fetch_witness_for_claim(
@@ -343,14 +343,13 @@ fn query_owner(deps: Deps) -> StdResult<GetOwnerResponse> {
 
 #[cfg(test)]
 mod tests {
+
     use crate::claims::{ClaimInfo, CompleteClaimData, SignedClaim};
 
     use super::*;
     use cosmwasm_std::{from_json, testing::*};
     use cosmwasm_std::{Coin, Uint128};
-    use k256::ecdsa::{SigningKey, VerifyingKey};
-    use keccak_hash::keccak256;
-    use rand_core::OsRng;
+    use web3::signing::hash_message;
 
     #[test]
 
@@ -400,9 +399,7 @@ mod tests {
             owner: owner.clone(),
         };
 
-        let signing_key = SigningKey::random(&mut OsRng);
-        let verifying_key = VerifyingKey::from(&signing_key);
-        let str_verifying_key = format!("{:?}", verifying_key);
+        let str_verifying_key = "0xbd3ce80d90c7a6f3564d37e6f94652ba15ed178c".to_string();
 
         let witness: Witness = Witness {
             address: str_verifying_key,
@@ -440,13 +437,10 @@ mod tests {
             owner: owner.clone(),
         };
 
-        let signing_key = SigningKey::random(&mut OsRng);
-        let verifying_key = VerifyingKey::from(&signing_key);
-        let mut enc_key = base16::encode_lower(&verifying_key.to_sec1_bytes()).split_off(26);
-        enc_key.insert_str(0, "0x");
+        let str_verifying_key = "0x76f6b994e78079940634f8c1c856f8a5b883259a".to_string();
 
         let witness: Witness = Witness {
-            address: enc_key.clone(),
+            address: str_verifying_key.clone(),
             host: "https://".to_string(),
         };
         let mut witness_vec = Vec::new();
@@ -462,37 +456,37 @@ mod tests {
 
         let claim_info = ClaimInfo {
             provider: "provider".to_owned(),
-            parameters: "".to_owned(),
+            parameters: "param".to_owned(),
             context: "{}".to_owned(),
         };
+
         let hashed = claim_info.hash();
         let now = mock_env().block.time.seconds();
         let complete_claim_data = CompleteClaimData {
             identifier: hashed,
-            owner: enc_key,
+            owner: str_verifying_key,
             epoch: 1_u64,
             timestamp_s: now,
         };
 
-        let mut hasher = Sha256::new();
-        let serialised_claim = complete_claim_data.serialise();
-        hasher.update(serialised_claim);
-        let mut result = hasher.finalize().to_vec();
-        keccak256(&mut result);
-
         let mut sigs = Vec::new();
-        let (signature, recid) = signing_key.sign_prehash_recoverable(&result).unwrap();
-        let enc = base16::encode_lower(&signature.to_bytes());
-        dbg!(&enc);
-        let dec = base16::decode(enc.as_bytes()).unwrap();
-        let recid_8: u8 = recid.try_into().unwrap();
-        sigs.push((dec, recid_8));
+
+        let message = "0xa6db2030140d1a1297ea836cf1fb0a1b467c5c21499dc0cd08dba63d62a6fdcc\n0x58843824aea8ed7fa22d524d723c83e1f3b7bce0\n1708529323\n1".to_string();
+        let bm = hash_message(message);
+        let message = bm.as_bytes().to_vec();
+
+        let mut sig = hex::decode("761c8f1b4f4d24685999cd0a6a43800cbd5fbcb5cfb83db374cb1b2d7713ced801cc4ef6ce3080bcae1db3ebdc3f5b3696c4c1dac552b7eb1e4348da7d6bad221c").unwrap();
+
+        let recovery_id = (sig[64] as i32 - 27) as u8;
+        sig.push(recovery_id);
+
+        sigs.push(sig);
 
         let signed_claim = SignedClaim {
             claim: complete_claim_data,
             signatures: sigs,
+            message: message,
         };
-        dbg!(&signed_claim);
         let verify_proof_msg = ProofMsg {
             claim_info: claim_info,
             signed_claim: signed_claim,

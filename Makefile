@@ -15,6 +15,6 @@ vanilla:
 	cp target/wasm32-unknown-unknown/release/reclaim_cosmwasm.wasm reclaim_cosmwasm.wasm
 
 test:
-	cargo +nightly test -- --nocapture
+	cargo test -- --nocapture
 clean:
 	cargo clean
