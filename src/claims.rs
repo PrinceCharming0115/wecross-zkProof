@@ -58,13 +58,14 @@ impl CompleteClaimData {
 #[serde(rename_all = "snake_case")]
 pub struct SignedClaim {
     pub claim: CompleteClaimData,
-    pub signatures: Vec<(Vec<u8>, u8)>,
+    pub signatures: Vec<Vec<u8>>,
+    pub message: Vec<u8>,
 }
 
 impl SignedClaim {
-    pub fn recover_signers_of_signed_claim(self, _deps: DepsMut) -> Vec<String> {
+    pub fn recover_signers_of_signed_claim(self, _deps: DepsMut) -> bool {
         // Create empty array
-        let mut expected = vec![];
+        let mut ok = false;
         // Hash the signature
         let mut hasher = Sha256::new();
         let serialised_claim = self.claim.serialise();
@@ -72,20 +73,16 @@ impl SignedClaim {
         let mut result = hasher.finalize().to_vec();
         keccak256(&mut result);
 
-        for (sig, recid_8) in self.signatures {
-            let signature = Signature::from_slice(&sig).unwrap();
-            let recid = RecoveryId::try_from(recid_8).unwrap();
-            let recovered_key =
-                VerifyingKey::recover_from_prehash(&result, &signature, recid).unwrap();
+        for mut sig in self.signatures {
+            let recid = RecoveryId::try_from(sig[sig.len() - 1]).unwrap();
+            sig.pop();
+            let signature = Signature::try_from(sig.as_slice()).unwrap();
+            let _ = VerifyingKey::recover_from_prehash(&self.message, &signature, recid).unwrap();
 
-            let mut str_recovered_key =
-                base16::encode_lower(&recovered_key.to_sec1_bytes()).split_off(26);
-            str_recovered_key.insert_str(0, "0x");
-
-            expected.push(str_recovered_key);
+            ok = true;
         }
 
-        expected
+        ok
     }
 
     pub fn recover_raw_signature(signature: String) -> [u8; 64] {

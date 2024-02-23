@@ -21,7 +21,7 @@ let get_epoch = async () => {
         code_hash: contractCodeHash,
         query: {
             get_epoch: {
-                id: "2"
+                id: "1"
             }
         }
     })

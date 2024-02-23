@@ -12,35 +12,41 @@ const secretjs = new SecretNetworkClient({
 });
 
 let verify_proof = async () => {
-    const contractAddress = "secret153h400h7xpgerq4ws0t574mwhyuggt72pqjqq5";
-    const contractCodeHash = "0d132c2ed8a8511d154cc2856f7e85fac5a1a005777a742a35ee47687bf91681"
+    const contractAddress = "secret17t02h2lxw4yw2e0cdp02042lm08j85jhw8t6a4";
+    const contractCodeHash = "96b419c550bde0e88be6e93629da7e6978d83751e857273f424bb899469834a6"
 
-    const owner = "0x42055047b1805df32bb833910eb639afc4cdacd9"
+    const owner = "0x76f6b994e78079940634f8c1c856f8a5b883259a"
 
     const claimInfo = {
+        "provider": "provider",
+        "parameters": "param",
         "context": "{}",
-        "parameters": "",
-        "provider": "provider"
-    }
-    const identifier = [234, 165, 224, 92, 0, 74, 219, 255, 255, 218, 124, 108, 95, 139, 212, 74, 61, 176, 217, 65, 12, 155, 247, 201, 163, 84, 156, 217, 129, 127, 47, 161];
-    const signatures = [([113, 222, 76, 71, 123, 251, 43, 136, 75, 174, 65, 178, 0, 25, 210, 157, 1, 24, 180, 16, 166, 75, 141, 152, 31, 61, 229, 219, 60, 171, 241, 233, 13, 17, 134, 24, 78, 48, 161, 98, 181, 31, 221, 158, 109, 71, 105, 137, 245, 194, 201, 17, 103, 226, 244, 77, 232, 189, 114, 161, 179, 250, 234, 223,], 1)]
-    const signedClaim = {
-        "claim": {
-            "epoch": 2,
-            "identifier": identifier,
-            "owner": owner,
-            "timestamp_s": 1571797419
-        },
-        "signatures": signatures
     }
 
+    const identifier = "0xa6db2030140d1a1297ea836cf1fb0a1b467c5c21499dc0cd08dba63d62a6fdcc"
+
+    const message = [53,148,134,250,217,11,186,55,221,14,162,179,148,70,207,252,19,30,22,135,213,37,64,50,8,167,159,10,37,141,217,151]
+    const signatures = [[118,28,143,27,79,77,36,104,89,153,205,10,106,67,128,12,189,95,188,181,207,184,61,179,116,203,27,45,119,19,206,216,1,204,78,246,206,48,128,188,174,29,179,235,220,63,91,54,150,196,193,218,197,82,183,235,30,67,72,218,125,107,173,34,1]]
+    
+    const signedClaim = {
+        "claim": {
+            "identifier": message,
+            "owner": owner,
+            "epoch": 1,
+            "timestamp_s": 1571797419
+        },
+        "signatures": signatures,
+        "message": message
+    }
+
+    
     let tx2 = await secretjs.tx.compute.executeContract(
         {
             sender: wallet.address,
             contract_address: contractAddress,
             msg: {
                 verify_proof: {
-                    calim_info: claimInfo,
+                    claim_info: claimInfo,
                     signed_claim: signedClaim,
                 }
             },
