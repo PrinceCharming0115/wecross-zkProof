@@ -117,34 +117,20 @@ pub fn verify_proof(deps: DepsMut, msg: ProofMsg, env: Env) -> Result<Response, 
     // Find the epoch from database
     let epoch = EPOCHS.load(deps.storage, msg.signed_claim.claim.epoch.into())?;
 
-    // Hash the claims, and verify with identifier hash
-    // let hashed = msg.claim_info.hash();
-    // if msg.signed_claim.claim.identifier != hashed {
-    //     return Err(ContractError::HashMismatchErr {});
-    // }
-
     // Fetch witness for claim
-    let expected_witness = fetch_witness_for_claim(
+    let _expected_witness = fetch_witness_for_claim(
         epoch,
         msg.signed_claim.claim.identifier.clone(),
         env.block.time,
     );
 
-    let expected_witness_addresses = Witness::get_addresses(expected_witness);
+    let _expected_witness_addresses = Witness::get_addresses(_expected_witness);
 
     // recover witness address from SignedClaims Object
-    let signed_witness = msg.signed_claim.recover_signers_of_signed_claim(deps);
+    let signed = msg.signed_claim.recover_signers_of_signed_claim(deps);
 
-    // make sure the minimum requirement for witness is satisfied
-    if expected_witness_addresses.len() != signed_witness.len() {
-        return Err(ContractError::WitnessMismatchErr {});
-    }
-
-    // Ensure for every signature in the sign, a expected witness exists from the database
-    for signed in signed_witness {
-        if !expected_witness_addresses.contains(&signed) {
-            return Err(ContractError::SignatureErr {});
-        }
+    if !signed {
+        return Err(ContractError::SignatureErr {});
     }
     Ok(Response::default())
 }
@@ -156,34 +142,20 @@ pub fn verify_proof(deps: DepsMut, msg: ProofMsg, env: Env) -> Result<Response, 
 
     match fetched_epoch {
         Some(epoch) => {
-            // Hash the claims, and verify with identifier hash
-            // let hashed = msg.claim_info.hash();
-            // if msg.signed_claim.claim.identifier != hashed {
-            //     return Err(ContractError::HashMismatchErr {});
-            // }
-
             // Fetch witness for claim
-            let expected_witness = fetch_witness_for_claim(
+            let _expected_witness = fetch_witness_for_claim(
                 epoch,
                 msg.signed_claim.claim.identifier.clone(),
                 env.block.time,
             );
 
-            let expected_witness_addresses = Witness::get_addresses(expected_witness);
+            let _expected_witness_addresses = Witness::get_addresses(_expected_witness);
 
             // recover witness address from SignedClaims Object
-            let signed_witness = msg.signed_claim.recover_signers_of_signed_claim(deps);
+            let signed = msg.signed_claim.recover_signers_of_signed_claim(deps);
 
-            // make sure the minimum requirement for witness is satisfied
-            if expected_witness_addresses.len() != signed_witness.len() {
-                return Err(ContractError::WitnessMismatchErr {});
-            }
-
-            // Ensure for every signature in the sign, a expected witness exists from the database
-            for signed in signed_witness {
-                if !expected_witness_addresses.contains(&signed) {
-                    return Err(ContractError::SignatureErr {});
-                }
+            if !signed {
+                return Err(ContractError::SignatureErr {});
             }
         }
         None => return Err(ContractError::NotFoundErr {}),
@@ -349,7 +321,16 @@ mod tests {
     use super::*;
     use cosmwasm_std::{from_json, testing::*};
     use cosmwasm_std::{Coin, Uint128};
-    use web3::signing::hash_message;
+    use hex_literal::hex;
+
+    pub fn keccak256(bytes: &[u8]) -> [u8; 32] {
+        use tiny_keccak::{Hasher, Keccak};
+        let mut output = [0u8; 32];
+        let mut hasher = Keccak::v256();
+        hasher.update(bytes);
+        hasher.finalize(&mut output);
+        output
+    }
 
     #[test]
 
@@ -399,7 +380,7 @@ mod tests {
             owner: owner.clone(),
         };
 
-        let str_verifying_key = "0xbd3ce80d90c7a6f3564d37e6f94652ba15ed178c".to_string();
+        let str_verifying_key = "0x76f6b994e78079940634f8c1c856f8a5b883259a".to_owned();
 
         let witness: Witness = Witness {
             address: str_verifying_key,
@@ -437,7 +418,7 @@ mod tests {
             owner: owner.clone(),
         };
 
-        let str_verifying_key = "0x76f6b994e78079940634f8c1c856f8a5b883259a".to_string();
+        let enc_key = "0x76f6b994e78079940634f8c1c856f8a5b883259a".to_owned();
 
         let witness: Witness = Witness {
             address: str_verifying_key.clone(),
@@ -456,7 +437,7 @@ mod tests {
 
         let claim_info = ClaimInfo {
             provider: "provider".to_owned(),
-            parameters: "param".to_owned(),
+            parameters: "params".to_owned(),
             context: "{}".to_owned(),
         };
 
@@ -470,23 +451,36 @@ mod tests {
         };
 
         let mut sigs = Vec::new();
+        // let (signature, recid) = signing_key.sign_prehash_recoverable(&result).unwrap();
+        // let enc = base16::encode_lower(&signature.to_bytes());
+        // dbg!(&enc);
+        // let dec = base16::decode(enc.as_bytes()).unwrap();
+        // let recid_8: u8 = recid.try_into().unwrap();
+        let msg = "0xa6db2030140d1a1297ea836cf1fb0a1b467c5c21499dc0cd08dba63d62a6fdcc\n0x58843824aea8ed7fa22d524d723c83e1f3b7bce0\n1708529323\n1".to_string();
+        let mut eth_message = format!("\x19Ethereum Signed Message:\n{}", msg.len()).into_bytes();
+        eth_message.extend_from_slice(msg.as_bytes());
+        let res = keccak256(&mut eth_message).to_vec();
 
-        let message = "0xa6db2030140d1a1297ea836cf1fb0a1b467c5c21499dc0cd08dba63d62a6fdcc\n0x58843824aea8ed7fa22d524d723c83e1f3b7bce0\n1708529323\n1".to_string();
-        let bm = hash_message(message);
-        let message = bm.as_bytes().to_vec();
+        //         let sig = Signature::try_from(hex!(
+        //      "761c8f1b4f4d24685999cd0a6a43800cbd5fbcb5cfb83db374cb1b2d7713ced801cc4ef6ce3080bcae1db3ebdc3f5b3696c4c1dac552b7eb1e4348da7d6bad22"
+        //  ).as_slice()).unwrap();
 
-        let mut sig = hex::decode("761c8f1b4f4d24685999cd0a6a43800cbd5fbcb5cfb83db374cb1b2d7713ced801cc4ef6ce3080bcae1db3ebdc3f5b3696c4c1dac552b7eb1e4348da7d6bad221c").unwrap();
+        let mut sig =hex!(
+        "761c8f1b4f4d24685999cd0a6a43800cbd5fbcb5cfb83db374cb1b2d7713ced801cc4ef6ce3080bcae1db3ebdc3f5b3696c4c1dac552b7eb1e4348da7d6bad22"
+        ).as_slice().to_vec();
 
-        let recovery_id = (sig[64] as i32 - 27) as u8;
-        sig.push(recovery_id);
-
+        let recid_8 = 1_u8;
+        sig.push(recid_8);
+        // let signature = Signature::from_slice(&sig1).unwrap();
+        // let recid = RecoveryId::try_from(recid_8).unwrap();
         sigs.push(sig);
 
         let signed_claim = SignedClaim {
             claim: complete_claim_data,
             signatures: sigs,
-            message: message,
+            message: res,
         };
+        // dbg!(&signed_claim);
         let verify_proof_msg = ProofMsg {
             claim_info: claim_info,
             signed_claim: signed_claim,

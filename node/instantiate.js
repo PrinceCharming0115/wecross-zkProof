@@ -14,8 +14,8 @@ const secretjs = new SecretNetworkClient({
 
 let instantiate_contract = async () => {
   const instantiateMsg = { owner: owner };
-  const codeId = 4840
-  const contractCodeHash = "137b30ce8969bb0cb4937092838eb597b3dde195acb2c91a07d7ac95c4c7b4c8"
+  const codeId = 5031
+  const contractCodeHash = "96b419c550bde0e88be6e93629da7e6978d83751e857273f424bb899469834a6"
   let tx = await secretjs.tx.compute.instantiateContract(
     {
       code_id: codeId,

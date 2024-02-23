@@ -60,17 +60,25 @@ pub struct SignedClaim {
 }
 
 impl SignedClaim {
-    pub fn recover_signers_of_signed_claim(self, _deps: DepsMut) -> Vec<String> {
-        let mut expected = vec![];
+    pub fn recover_signers_of_signed_claim(self, _deps: DepsMut) -> bool {
+        // Create empty array
+        let mut ok = false;
+        // Hash the signature
+        let mut hasher = Sha256::new();
+        let serialised_claim = self.claim.serialise();
+        hasher.update(serialised_claim);
+        let mut result = hasher.finalize().to_vec();
+        keccak256(&mut result);
 
-        for sig in self.signatures {
-            let pubkey = recover(&self.message, &sig[..64], sig[65].into());
-            let pubkey = pubkey.unwrap();
-            let pubkey = format!("{:02X?}", pubkey);
+        for mut sig in self.signatures {
+            let recid = RecoveryId::try_from(sig[sig.len() - 1]).unwrap();
+            sig.pop();
+            let signature = Signature::try_from(sig.as_slice()).unwrap();
+            let _ = VerifyingKey::recover_from_prehash(&self.message, &signature, recid).unwrap();
 
-            expected.push(pubkey);
+            ok = true;
         }
 
-        expected
+        ok
     }
 }

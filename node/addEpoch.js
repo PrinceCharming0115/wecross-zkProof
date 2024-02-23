@@ -12,9 +12,9 @@ const secretjs = new SecretNetworkClient({
 });
 
 let add_epoch = async () => {
-    const contractAddress = "secret1f4r560x76whq2p2pu460tqug3ym7qxf2ln8xpj"
-    const contractCodeHash = "137b30ce8969bb0cb4937092838eb597b3dde195acb2c91a07d7ac95c4c7b4c8"
-    const owner = "0xce1e47c94ec43012af8243090152463b0cea7974"
+    const contractAddress = "secret17t02h2lxw4yw2e0cdp02042lm08j85jhw8t6a4";
+    const contractCodeHash = "96b419c550bde0e88be6e93629da7e6978d83751e857273f424bb899469834a6"
+    const owner = "0x76f6b994e78079940634f8c1c856f8a5b883259a"
 
     let tx = await secretjs.tx.compute.executeContract(
         {
