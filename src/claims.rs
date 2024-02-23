@@ -1,9 +1,6 @@
-use ecdsa::RecoveryId;
-use k256::ecdsa::{Signature, VerifyingKey};
-use keccak_hash::keccak256;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
+use web3::signing::{hash_message, recover};
 
 #[cfg(feature = "vanilla")]
 use cosmwasm_std::DepsMut;
@@ -21,14 +18,14 @@ pub struct ClaimInfo {
 
 impl ClaimInfo {
     pub fn hash(&self) -> Vec<u8> {
-        let mut hasher = Sha256::new();
         let hash_str = format!(
             "{}\n{}\n{}",
             &self.provider, &self.parameters, &self.context
         );
-        hasher.update(hash_str.as_bytes().to_vec());
-        let result = hasher.finalize().to_vec();
-        return result;
+        let bm = hash_message(hash_str);
+        let message = bm.as_bytes().to_vec();
+
+        return message;
     }
 }
 
@@ -83,18 +80,5 @@ impl SignedClaim {
         }
 
         ok
-    }
-
-    pub fn recover_raw_signature(signature: String) -> [u8; 64] {
-        let ss = signature.as_str();
-        let sss = &ss[28..156].to_lowercase();
-        let sss_str = sss.as_str();
-        let mut arr = [0_u8; 64];
-        for i in 0..64 {
-            let ss = &sss_str[(2 * i)..(2 * i + 2)];
-            let z = u8::from_str_radix(ss, 16).unwrap();
-            arr[i] = z;
-        }
-        arr
     }
 }

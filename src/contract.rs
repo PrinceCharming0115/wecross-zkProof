@@ -315,6 +315,7 @@ fn query_owner(deps: Deps) -> StdResult<GetOwnerResponse> {
 
 #[cfg(test)]
 mod tests {
+
     use crate::claims::{ClaimInfo, CompleteClaimData, SignedClaim};
 
     use super::*;
@@ -420,7 +421,7 @@ mod tests {
         let enc_key = "0x76f6b994e78079940634f8c1c856f8a5b883259a".to_owned();
 
         let witness: Witness = Witness {
-            address: enc_key.clone(),
+            address: str_verifying_key.clone(),
             host: "https://".to_string(),
         };
         let mut witness_vec = Vec::new();
@@ -444,7 +445,7 @@ mod tests {
         let now = mock_env().block.time.seconds();
         let complete_claim_data = CompleteClaimData {
             identifier: hashed,
-            owner: enc_key,
+            owner: str_verifying_key,
             epoch: 1_u64,
             timestamp_s: now,
         };
