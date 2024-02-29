@@ -1,6 +1,11 @@
+use k256::ecdsa::RecoveryId;
+use k256::ecdsa::Signature;
+use k256::ecdsa::VerifyingKey;
+use keccak_hash::keccak256;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use web3::signing::{hash_message, recover};
+use sha2::Digest;
+use sha2::Sha256;
 
 #[cfg(feature = "vanilla")]
 use cosmwasm_std::DepsMut;
@@ -22,10 +27,7 @@ impl ClaimInfo {
             "{}\n{}\n{}",
             &self.provider, &self.parameters, &self.context
         );
-        let bm = hash_message(hash_str);
-        let message = bm.as_bytes().to_vec();
-
-        return message;
+        hash_str.as_bytes().to_vec()
     }
 }
 
