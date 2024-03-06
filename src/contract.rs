@@ -15,8 +15,8 @@ use {
 use {
     crate::state_secret::{CONFIG, EPOCHS},
     secret_std::{
-        attr_plaintext, entry_point, to_binary, Addr, Binary, Deps, DepsMut, Env, Event,
-        MessageInfo, Response, StdError, StdResult, Timestamp, Uint128,
+        entry_point, to_binary, Addr, Binary, Deps, DepsMut, Env, Event, MessageInfo, Response,
+        StdError, StdResult, Timestamp, Uint128,
     },
 };
 
@@ -188,9 +188,9 @@ pub fn verify_proof(deps: DepsMut, msg: ProofMsg, env: Env) -> Result<Response, 
                 let signed_event =
                     Event::new("signer").add_attribute_plaintext("sig", signed.clone());
                 resp = resp.add_event(signed_event);
-                // if !expected_witness_addresses.contains(&signed) {
-                //     return Err(ContractError::SignatureErr {});
-                // }
+                if !expected_witness_addresses.contains(&signed) {
+                    return Err(ContractError::SignatureErr {});
+                }
             }
         }
         None => return Err(ContractError::NotFoundErr {}),

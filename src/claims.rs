@@ -7,7 +7,7 @@ use sha3::{Digest, Keccak256};
 use cosmwasm_std::{Addr, CanonicalAddr, DepsMut, Uint128};
 
 #[cfg(feature = "secret")]
-use secret_std::{Addr, CanonicalAddr, DepsMut, Uint128};
+use secret_std::{DepsMut, Uint128};
 
 pub fn append_0x(content: &str) -> String {
     let mut initializer = String::from("0x");
