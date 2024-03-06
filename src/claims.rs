@@ -1,10 +1,13 @@
 use crate::ContractError;
+mod identity_digest;
+#[cfg(feature = "vanilla")]
+use cosmwasm_std::{Addr, CanonicalAddr, DepsMut, Uint128};
+use k256::{
+    ecdsa::{RecoveryId, Signature, VerifyingKey}, // type aliases
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sha3::{Digest, Keccak256};
-
-#[cfg(feature = "vanilla")]
-use cosmwasm_std::{Addr, CanonicalAddr, DepsMut, Uint128};
 
 #[cfg(feature = "secret")]
 use secret_std::{DepsMut, Uint128};
@@ -87,8 +90,10 @@ pub struct SignedClaim {
 impl SignedClaim {
     pub fn recover_signers_of_signed_claim(
         self,
-        deps: DepsMut,
+        _deps: DepsMut,
     ) -> Result<Vec<String>, ContractError> {
+        use crate::claims::identity_digest::Identity256;
+        use digest::Update;
         // Create empty array
         let mut expected = vec![];
         // Hash the signature
@@ -101,24 +106,26 @@ impl SignedClaim {
         for complete_signature in self.signatures {
             let r_s = hex::decode(complete_signature.signature).unwrap();
             let recovery_param = complete_signature.recovery_param;
+
+            let id = match recovery_param {
+                0 => RecoveryId::new(false, false),
+                1 => RecoveryId::new(true, false),
+                _ => return Err(ContractError::SignatureErr {}),
+            };
+
+            let signature = Signature::from_bytes(r_s.as_slice().into()).unwrap();
+            let message_digest = Identity256::new().chain(&message_hash);
+
             // Recover the public key
-            let pubkey = deps
-                .api
-                .secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param);
-            match pubkey {
-                Ok(key) => {
-                    let mut hasher = Keccak256::new();
-                    hasher.update(&key[1..]);
+            let verkey = VerifyingKey::recover_from_digest(message_digest, &signature, id).unwrap();
+            let key: Vec<u8> = verkey.to_encoded_point(false).as_bytes().into();
+            let hasher = Keccak256::new_with_prefix(&key[1..]);
 
-                    let hash = hasher.finalize().to_vec();
+            let hash = hasher.finalize().to_vec();
 
-                    let address_bytes = hash.get(12..).unwrap();
-                    let public_key = append_0x(&hex::encode(address_bytes));
-                    expected.push(public_key);
-                }
-                // optimise: better error enums
-                Err(..) => return Err(ContractError::PubKeyErr {}),
-            }
+            let address_bytes = hash.get(12..).unwrap();
+            let public_key = append_0x(&hex::encode(address_bytes));
+            expected.push(public_key);
         }
         Ok(expected)
     }
