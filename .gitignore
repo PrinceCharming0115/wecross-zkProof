@@ -15,7 +15,6 @@
 *.iml
 .idea
 *.wasm
-
 *.wasm.gz
 
 # node

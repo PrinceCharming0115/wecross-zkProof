@@ -15,6 +15,7 @@ vanilla:
 	cp target/wasm32-unknown-unknown/release/reclaim_cosmwasm.wasm reclaim_cosmwasm.wasm
 	cat ./reclaim_cosmwasm.wasm | gzip -9 > ./reclaim_cosmwasm.wasm.gz
 
-
+test:
+	cargo +nightly test -- --nocapture
 clean:
 	cargo clean
