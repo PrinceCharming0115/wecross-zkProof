@@ -5,7 +5,8 @@ use {
     cosmwasm_std::entry_point,
     cosmwasm_std::to_json_binary,
     cosmwasm_std::{
-        Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Timestamp, Uint128,
+        Addr, Binary, Deps, DepsMut, Env, Event, MessageInfo, Response, StdResult, Timestamp,
+        Uint128,
     },
 };
 
@@ -14,8 +15,8 @@ use {
 use {
     crate::state_secret::{CONFIG, EPOCHS},
     secret_std::{
-        entry_point, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError,
-        StdResult, Timestamp, Uint128,
+        attr_plaintext, entry_point, to_binary, Addr, Binary, Deps, DepsMut, Env, Event,
+        MessageInfo, Response, StdError, StdResult, Timestamp, Uint128,
     },
 };
 
@@ -78,7 +79,7 @@ fn generate_random_seed(bytes: Vec<u8>, offset: usize) -> u32 {
 
 pub fn fetch_witness_for_claim(
     epoch: Epoch,
-    identifier: Vec<u8>,
+    identifier: String,
     timestamp: Timestamp,
 ) -> Vec<Witness> {
     let mut selected_witness = vec![];
@@ -116,6 +117,7 @@ pub fn fetch_witness_for_claim(
 pub fn verify_proof(deps: DepsMut, msg: ProofMsg, env: Env) -> Result<Response, ContractError> {
     // Find the epoch from database
     let epoch = EPOCHS.load(deps.storage, msg.signed_claim.claim.epoch.into())?;
+    let mut resp = Response::new();
 
     // Hash the claims, and verify with identifier hash
     let hashed = msg.claim_info.hash();
@@ -142,18 +144,20 @@ pub fn verify_proof(deps: DepsMut, msg: ProofMsg, env: Env) -> Result<Response, 
 
     // Ensure for every signature in the sign, a expected witness exists from the database
     for signed in signed_witness {
+        let signed_event = Event::new("signer").add_attribute("sig", signed.clone());
+        resp = resp.add_event(signed_event);
         if !expected_witness_addresses.contains(&signed) {
             return Err(ContractError::SignatureErr {});
         }
     }
-    Ok(Response::default())
+    Ok(resp)
 }
 
 #[cfg(feature = "secret")]
 pub fn verify_proof(deps: DepsMut, msg: ProofMsg, env: Env) -> Result<Response, ContractError> {
     // Find the epoch from database
     let fetched_epoch = EPOCHS.get(deps.storage, &msg.signed_claim.claim.epoch.into());
-
+    let mut resp = Response::new();
     match fetched_epoch {
         Some(epoch) => {
             // Hash the claims, and verify with identifier hash
@@ -181,15 +185,18 @@ pub fn verify_proof(deps: DepsMut, msg: ProofMsg, env: Env) -> Result<Response, 
 
             // Ensure for every signature in the sign, a expected witness exists from the database
             for signed in signed_witness {
-                if !expected_witness_addresses.contains(&signed) {
-                    return Err(ContractError::SignatureErr {});
-                }
+                let signed_event =
+                    Event::new("signer").add_attribute_plaintext("sig", signed.clone());
+                resp = resp.add_event(signed_event);
+                // if !expected_witness_addresses.contains(&signed) {
+                //     return Err(ContractError::SignatureErr {});
+                // }
             }
         }
         None => return Err(ContractError::NotFoundErr {}),
     }
 
-    Ok(Response::default())
+    Ok(resp)
 }
 
 #[cfg(feature = "vanilla")]

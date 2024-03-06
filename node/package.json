@@ -1,0 +1,21 @@
+{
+    "name": "node",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "type": "module",
+    "scripts": {
+      "upload": "node upload",
+      "instantiate": "node instantiate",
+      "epoch": "node addEpoch",
+      "verify": "node verifyProof"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+      "dotenv": "^16.4.1",
+      "secretjs": "^1.12.4"
+    }
+  }
+  

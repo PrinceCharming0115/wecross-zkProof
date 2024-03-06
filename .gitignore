@@ -15,3 +15,11 @@
 *.iml
 .idea
 *.wasm
+
+*.wasm.gz
+
+# node
+/node/node_modules
+
+# env
+.env
