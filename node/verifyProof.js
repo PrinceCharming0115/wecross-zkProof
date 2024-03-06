@@ -12,10 +12,10 @@ const secretjs = new SecretNetworkClient({
 });
 
 let verify_proof = async () => {
-    const contractAddress = "secret17t02h2lxw4yw2e0cdp02042lm08j85jhw8t6a4";
-    const contractCodeHash = "96b419c550bde0e88be6e93629da7e6978d83751e857273f424bb899469834a6"
+    const contractAddress = process.env.CONTRACT_ADDRESS;
+    const contractCodeHash = process.env.CONTRACT_CODE_HASH;
 
-    const owner = "0x76f6b994e78079940634f8c1c856f8a5b883259a"
+    const owner = "0xe70415eb011253b6721d4f9149dd525d6afe370f"
 
     const claimInfo = {
         "provider": "provider",
@@ -25,18 +25,22 @@ let verify_proof = async () => {
 
     const identifier = "0xa6db2030140d1a1297ea836cf1fb0a1b467c5c21499dc0cd08dba63d62a6fdcc"
 
-    const message = [53,148,134,250,217,11,186,55,221,14,162,179,148,70,207,252,19,30,22,135,213,37,64,50,8,167,159,10,37,141,217,151]
-    const signatures = [[118,28,143,27,79,77,36,104,89,153,205,10,106,67,128,12,189,95,188,181,207,184,61,179,116,203,27,45,119,19,206,216,1,204,78,246,206,48,128,188,174,29,179,235,220,63,91,54,150,196,193,218,197,82,183,235,30,67,72,218,125,107,173,34,1]]
+    // const id = [53,148,134,250,217,11,186,55,221,14,162,179,148,70,207,252,19,30,22,135,213,37,64,50,8,167,159,10,37,141,217,151]
+    // const signatures = [[118,28,143,27,79,77,36,104,89,153,205,10,106,67,128,12,189,95,188,181,207,184,61,179,116,203,27,45,119,19,206,216,1,204,78,246,206,48,128,188,174,29,179,235,220,63,91,54,150,196,193,218,197,82,183,235,30,67,72,218,125,107,173,34,1]]
     
+    const complete_signature = {
+        signature: "d8076039793e7014a9fd746b8531530d52d66c4c622e346ca1f157323348cd5e53cd95e00f88e211b6fddc3bee78c8fbbecc4469000620764f611e4d2b7dabde",
+        recovery_param: 0,
+    }
+
     const signedClaim = {
         "claim": {
-            "identifier": message,
+            "identifier": identifier,
             "owner": owner,
-            "epoch": 1,
-            "timestamp_s": 1571797419
+            "epoch": "1",
+            "timestamp_s": 1709553706
         },
-        "signatures": signatures,
-        "message": message
+        "signatures": [complete_signature],
     }
 
     

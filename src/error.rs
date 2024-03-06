@@ -15,7 +15,7 @@ pub enum ContractError {
     PubKeyErr {},
     #[error("Signature not appropriate")]
     SignatureErr {},
-    #[error("Hashes mismatch")]
+    #[error("Hash mismatch")]
     HashMismatchErr {},
     #[error("Not enough witness")]
     WitnessMismatchErr {},

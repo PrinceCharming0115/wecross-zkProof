@@ -42,4 +42,3 @@ let upload_contract = async () => {
 };
 
 upload_contract();
-

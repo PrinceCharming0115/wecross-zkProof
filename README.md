@@ -1,13 +1,20 @@
 # Reclaim Cosmwasm
 
-Steps to generate WASM contract for any cosmwasm chain:
-
-```
-make vanilla
-```
-
-Steps to generate WASM contract for secret chain:
+Generate WASM contract for secret chain:
 
 ```
 make secret
+```
+
+In node directory, populate your .env:
+
+```
+MNEMONIC= // Your mnemonic
+OWNER= // Your secret address associated with the above mnemonic
+```
+
+In the same directory:
+
+```
+node all
 ```
