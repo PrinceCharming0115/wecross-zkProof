@@ -133,7 +133,7 @@ let verify_proof = async () => {
         "claim": {
             "identifier": identifier,
             "owner": owner,
-            "epoch": "2",
+            "epoch": 2,
             "timestamp_s": 1709797755
         },
         "signatures": [complete_signature],

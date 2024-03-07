@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use sha3::{Digest, Keccak256};
 
 #[cfg(feature = "secret")]
-use secret_std::{DepsMut, Uint128};
+use secret_std::DepsMut;
 
 pub fn append_0x(content: &str) -> String {
     let mut initializer = String::from("0x");
@@ -57,7 +57,7 @@ impl ClaimInfo {
 pub struct CompleteClaimData {
     pub identifier: String,
     pub owner: String,
-    pub epoch: Uint128,
+    pub epoch: u64,
     pub timestamp_s: u64,
 }
 
