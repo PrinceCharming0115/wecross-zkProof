@@ -130,3 +130,10 @@ impl SignedClaim {
         Ok(expected)
     }
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct Proof {
+    pub claim_info: ClaimInfo,
+    pub signed_claim: SignedClaim,
+}

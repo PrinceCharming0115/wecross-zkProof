@@ -140,14 +140,18 @@ let verify_proof = async () => {
     }
 
 
+    const proof = {
+        claim_info: claimInfo,
+        signed_claim: signedClaim
+    }
+
     let tx = await secretjs.tx.compute.executeContract(
         {
             sender: wallet.address,
             contract_address: contractAddress,
             msg: {
                 verify_proof: {
-                    claim_info: claimInfo,
-                    signed_claim: signedClaim,
+                    proof: proof
                 }
             },
             code_hash: contractCodeHash,

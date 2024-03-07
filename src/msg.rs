@@ -8,7 +8,7 @@ use cosmwasm_std::Uint128;
 use secret_std::Uint128;
 
 use crate::{
-    claims::{ClaimInfo, SignedClaim},
+    claims::Proof,
     state::{Epoch, Witness},
 };
 
@@ -50,6 +50,5 @@ pub struct GetEpochResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct ProofMsg {
-    pub claim_info: ClaimInfo,
-    pub signed_claim: SignedClaim,
+    pub proof: Proof,
 }
