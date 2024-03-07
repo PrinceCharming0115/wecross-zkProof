@@ -121,28 +121,20 @@ let verify_proof = async () => {
 
     const identifier = "0x531322a6c34e5a71296a5ee07af13f0c27b5b1e50616f816374aff6064daaf55"
 
-    // const id = [53,148,134,250,217,11,186,55,221,14,162,179,148,70,207,252,19,30,22,135,213,37,64,50,8,167,159,10,37,141,217,151]
-    // const signatures = [[118,28,143,27,79,77,36,104,89,153,205,10,106,67,128,12,189,95,188,181,207,184,61,179,116,203,27,45,119,19,206,216,1,204,78,246,206,48,128,188,174,29,179,235,220,63,91,54,150,196,193,218,197,82,183,235,30,67,72,218,125,107,173,34,1]]
-
-    const complete_signature = {
-        signature: "fe5f5d8a9d2e0fb1515ce190d23ef6a8bd962880c24bcec232fa69254bab9e61634deea583794ff7041f0e10e4d550797fd5bab2106c10bec2c0a30e1cd17fe4",
-        recovery_param: 1,
-    }
-
     const signedClaim = {
         "claim": {
             "identifier": identifier,
             "owner": owner,
             "epoch": 2,
-            "timestamp_s": 1709797755
+            "timestampS": 1709797755
         },
-        "signatures": [complete_signature],
+        "signatures": ["0xfe5f5d8a9d2e0fb1515ce190d23ef6a8bd962880c24bcec232fa69254bab9e61634deea583794ff7041f0e10e4d550797fd5bab2106c10bec2c0a30e1cd17fe41c"],
     }
 
 
     const proof = {
-        claim_info: claimInfo,
-        signed_claim: signedClaim
+        claimInfo: claimInfo,
+        signedClaim: signedClaim
     }
 
     let tx = await secretjs.tx.compute.executeContract(

@@ -1,3 +1,5 @@
+#![allow(non_snake_case)]
+
 use crate::ContractError;
 mod identity_digest;
 #[cfg(feature = "vanilla")]
@@ -53,12 +55,11 @@ impl ClaimInfo {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub struct CompleteClaimData {
     pub identifier: String,
     pub owner: String,
     pub epoch: u64,
-    pub timestamp_s: u64,
+    pub timestampS: u64,
 }
 
 impl CompleteClaimData {
@@ -67,7 +68,7 @@ impl CompleteClaimData {
             "{}\n{}\n{}\n{}",
             &self.identifier,
             &self.owner.to_string(),
-            &self.timestamp_s.to_string(),
+            &self.timestampS.to_string(),
             &self.epoch.to_string()
         )
     }
@@ -75,16 +76,9 @@ impl CompleteClaimData {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub struct CompleteSignature {
-    pub signature: String,
-    pub recovery_param: u8,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub struct SignedClaim {
     pub claim: CompleteClaimData,
-    pub signatures: Vec<CompleteSignature>,
+    pub signatures: Vec<String>,
 }
 
 impl SignedClaim {
@@ -103,11 +97,21 @@ impl SignedClaim {
         let message_hash = bm.to_vec();
 
         // For each signature in the claim
-        for complete_signature in self.signatures {
-            let r_s = hex::decode(complete_signature.signature).unwrap();
-            let recovery_param = complete_signature.recovery_param;
+        for mut complete_signature in self.signatures {
+            complete_signature.remove(0);
+            complete_signature.remove(0);
+            let rec_param = complete_signature
+                .get((complete_signature.len() as usize - 2)..(complete_signature.len() as usize))
+                .unwrap();
+            let mut mut_sig_str = complete_signature.clone();
+            mut_sig_str.pop();
+            mut_sig_str.pop();
 
-            let id = match recovery_param {
+            let rec_dec = hex::decode(rec_param).unwrap();
+            let rec_norm = rec_dec.first().unwrap() - 27;
+            let r_s = hex::decode(mut_sig_str).unwrap();
+
+            let id = match rec_norm {
                 0 => RecoveryId::new(false, false),
                 1 => RecoveryId::new(true, false),
                 _ => return Err(ContractError::SignatureErr {}),
@@ -134,6 +138,6 @@ impl SignedClaim {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct Proof {
-    pub claim_info: ClaimInfo,
-    pub signed_claim: SignedClaim,
+    pub claimInfo: ClaimInfo,
+    pub signedClaim: SignedClaim,
 }

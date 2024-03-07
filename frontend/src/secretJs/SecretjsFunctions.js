@@ -3,16 +3,16 @@ import { MsgExecuteContract } from "secretjs";
 import { SecretjsContext } from "./SecretjsContext";
 
 let contractCodeHash =
-  "85a48dca9466955ae898f470a16a8cd4f784535794a2e19734031b6bc19d85e7";
-let contractAddress = "secret1pn2rgadfzsv85cmwudktgfxgp3v50k376jzz6m";
+  "57f12f617e7b4bf202675b94da2e486042d4d584b79d5e07ece8a432e8a4b42d";
+let contractAddress = "secret1z7v94lkjmhvv58zcqydgwzqp27umdmhgfx27q7";
 
 const SecretjsFunctions = () => {
   const { secretjs, secretAddress } = useContext(SecretjsContext);
 
   let verify_proof = async (claimInfo, signedClaim) => {
     const proof = {
-      claim_info: claimInfo,
-      signed_claim: signedClaim,
+      claimInfo: claimInfo,
+      signedClaim: signedClaim,
     }
 
     console.log(proof)

@@ -156,20 +156,20 @@ pub fn verify_proof(deps: DepsMut, msg: ProofMsg, env: Env) -> Result<Response, 
 #[cfg(feature = "secret")]
 pub fn verify_proof(deps: DepsMut, msg: ProofMsg, env: Env) -> Result<Response, ContractError> {
     // Find the epoch from database
-    let fetched_epoch = EPOCHS.get(deps.storage, &msg.proof.signed_claim.claim.epoch.into());
+    let fetched_epoch = EPOCHS.get(deps.storage, &msg.proof.signedClaim.claim.epoch.into());
     let mut resp = Response::new();
     match fetched_epoch {
         Some(epoch) => {
             // Hash the claims, and verify with identifier hash
-            let hashed = msg.proof.claim_info.hash();
-            if msg.proof.signed_claim.claim.identifier != hashed {
+            let hashed = msg.proof.claimInfo.hash();
+            if msg.proof.signedClaim.claim.identifier != hashed {
                 return Err(ContractError::HashMismatchErr {});
             }
 
             // Fetch witness for claim
             let expected_witness = fetch_witness_for_claim(
                 epoch,
-                msg.proof.signed_claim.claim.identifier.clone(),
+                msg.proof.signedClaim.claim.identifier.clone(),
                 env.block.time,
             );
 
@@ -178,7 +178,7 @@ pub fn verify_proof(deps: DepsMut, msg: ProofMsg, env: Env) -> Result<Response, 
             // recover witness address from SignedClaims Object
             let signed_witness = msg
                 .proof
-                .signed_claim
+                .signedClaim
                 .recover_signers_of_signed_claim(deps)?;
 
             // make sure the minimum requirement for witness is satisfied
