@@ -8,20 +8,20 @@ function App() {
     <div className="App">
       <ProofForm
         claimInfo={{
-          "provider": "provider",
-          "parameters": "param",
-          "context": "{}",
+          "provider": "http",
+          "parameters": "{\"body\":\"\",\"geoLocation\":\"in\",\"method\":\"GET\",\"responseMatches\":[{\"type\":\"contains\",\"value\":\"_steamid\\\">Steam ID: 76561199632643233</div>\"}],\"responseRedactions\":[{\"jsonPath\":\"\",\"regex\":\"_steamid\\\">Steam ID: (.*)</div>\",\"xPath\":\"id(\\\"responsive_page_template_content\\\")/div[@class=\\\"page_header_ctn\\\"]/div[@class=\\\"page_content\\\"]/div[@class=\\\"youraccount_steamid\\\"]\"}],\"url\":\"https://store.steampowered.com/account/\"}",
+          "context": "{\"contextAddress\":\"user's address\",\"contextMessage\":\"for acmecorp.com on 1st january\"}",
       }}
         signedClaim={{
           "claim": {
-              "identifier": "0xa6db2030140d1a1297ea836cf1fb0a1b467c5c21499dc0cd08dba63d62a6fdcc",
-              "owner": "0xe70415eb011253b6721d4f9149dd525d6afe370f",
-              "epoch": "1",
-              "timestamp_s": 1709553706
+              "identifier": "0x531322a6c34e5a71296a5ee07af13f0c27b5b1e50616f816374aff6064daaf55",
+              "owner": "0x597b40d79e93509832ec13ec4eb8c3f316c11b4f",
+              "epoch": "2",
+              "timestamp_s": 1709797755
           },
           "signatures": [{
-            signature: "d8076039793e7014a9fd746b8531530d52d66c4c622e346ca1f157323348cd5e53cd95e00f88e211b6fddc3bee78c8fbbecc4469000620764f611e4d2b7dabde",
-            recovery_param: 0,
+            signature: "fe5f5d8a9d2e0fb1515ce190d23ef6a8bd962880c24bcec232fa69254bab9e61634deea583794ff7041f0e10e4d550797fd5bab2106c10bec2c0a30e1cd17fe4",
+            recovery_param: 1,
         }],
       }}
       />
