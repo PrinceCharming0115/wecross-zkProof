@@ -73,8 +73,7 @@ let instantiate_contract = async () => {
 await instantiate_contract();
 
 let add_epoch = async () => {
-    const owner1 = "0x0000000000000000000000000000000000000000"
-    const owner2 = "0x244897572368eadf65bfbc5aec98d8e5443a9072"
+    const owner = "0x244897572368eadf65bfbc5aec98d8e5443a9072"
 
     let tx1 = await secretjs.tx.compute.executeContract(
         {
@@ -82,7 +81,7 @@ let add_epoch = async () => {
             contract_address: contractAddress,
             msg: {
                 add_epoch: {
-                    witness: [{ address: owner1, host: "" }],
+                    witness: [{ address: owner, host: "" }],
                     minimum_witness: "1",
                 }
             },
@@ -90,28 +89,13 @@ let add_epoch = async () => {
         },
         { gasLimit: 100_000 }
     );
-    // console.log(tx)
-
-    let tx2 = await secretjs.tx.compute.executeContract(
-        {
-            sender: wallet.address,
-            contract_address: contractAddress,
-            msg: {
-                add_epoch: {
-                    witness: [{ address: owner2, host: "https://reclaim-node.questbook.app" }],
-                    minimum_witness: "1",
-                }
-            },
-            code_hash: contractCodeHash,
-        },
-        { gasLimit: 100_000 }
-    );
+    // console.log(tx1)
 };
 
 await add_epoch();
 
 let verify_proof = async () => {
-    const owner = "0x597b40d79e93509832ec13ec4eb8c3f316c11b4f"
+    const owner = "0xe4c20c9f558160ec08106de300326f7e9c73fb7f"
 
     const claimInfo = {
         "provider": "http",
@@ -125,10 +109,10 @@ let verify_proof = async () => {
         "claim": {
             "identifier": identifier,
             "owner": owner,
-            "epoch": 2,
-            "timestampS": 1709797755
+            "epoch": 1,
+            "timestampS": 1710157447
         },
-        "signatures": ["0xfe5f5d8a9d2e0fb1515ce190d23ef6a8bd962880c24bcec232fa69254bab9e61634deea583794ff7041f0e10e4d550797fd5bab2106c10bec2c0a30e1cd17fe41c"],
+        "signatures": ["0x52e2a591f51351c1883559f8b6c6264b9cb5984d0b7ccc805078571242166b357994460a1bf8f9903c4130f67d358d7d6e9a52df9a38c51db6a10574b946884c1b"],
     }
 
 
