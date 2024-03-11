@@ -4,24 +4,66 @@ import { SecretjsContext } from "../secretJs/SecretjsContext";
 import { SecretjsFunctions } from "../secretJs/SecretjsFunctions";
 import { useContext, useState } from "react";
 
-function ProofForm({
-  claimInfo,
-  signedClaim
-}) {
+const realProof = {
+  "identifier": "0xbd0f6ba9f99fe302576ee7cd469abf2787f21e9fedb05e3c963783f7e0fe8129",
+  "claimData": {
+    "provider": "http",
+    "parameters": "{\"body\":\"\",\"method\":\"GET\",\"responseMatches\":[{\"type\":\"contains\",\"value\":\"_steamid\\\">Steam ID: 76561199564944093</div>\"}],\"responseRedactions\":[{\"jsonPath\":\"\",\"regex\":\"_steamid\\\">Steam ID: (.*)</div>\",\"xPath\":\"id(\\\"responsive_page_template_content\\\")/div[@class=\\\"page_header_ctn\\\"]/div[@class=\\\"page_content\\\"]/div[@class=\\\"youraccount_steamid\\\"]\"}],\"url\":\"https://store.steampowered.com/account/\"}",
+    "owner": "0x6f37e34642693a0c433dcf5998ec3e30b62be9b9",
+    "timestampS": 1707292621,
+    "context": "{\"contextAddress\":\"0x0\",\"contextMessage\":\"\"}",
+    "identifier": "0xbd0f6ba9f99fe302576ee7cd469abf2787f21e9fedb05e3c963783f7e0fe8129",
+    "epoch": 2
+  },
+  "signatures": [
+    "0xe6fb44b8162f42994a57626342d518f7fb032acf952ab952209808da183a54a64e522d9edd1783ee95f2124484e87be40c12512cbb19eecf5c9140f3353716371c"
+  ],
+  "witnesses": [
+    {
+      "id": "0x244897572368eadf65bfbc5aec98d8e5443a9072",
+      "url": "https://reclaim-node.questbook.app"
+    }
+  ],
+  "extractedParameterValues": {
+    "CLAIM_DATA": "76561199564944093"
+  }
+}
+
+function ProofForm(props) {
   const { secretAddress, connectWallet } = useContext(SecretjsContext);
   const { verify_proof } =
     SecretjsFunctions();
 
-  const [proof, setProof] = useState("");
+  const [proof, setProof] = useState(props.proof);
   const [richerModalOpen, setRicherModalOpen] = useState(false);
   const [showRicherButton, setShowRicherButton] = useState(true);
+
+  const transformProof = (proof) => {
+    const claimInfoBuilder = new Map([
+      ["context", proof["claimData"]["context"]],
+      ["parameters", proof["claimData"]["parameters"]],
+      ["provider", proof["claimData"]["provider"]],
+    ]);
+    const claimInfo = Object.fromEntries(claimInfoBuilder);
+    const claimBuilder = new Map([
+      ["epoch", proof["claimData"]["epoch"]],
+      ["identifier", proof["claimData"]["identifier"]],
+      ["owner", proof["claimData"]["owner"]],
+      ["timestampS", proof["claimData"]["timestampS"]],
+    ]);
+    const signedClaim = {
+      claim: Object.fromEntries(claimBuilder),
+      signatures: proof["signatures"],
+    };
+    console.log({ claimInfo, signedClaim })
+    return { claimInfo, signedClaim };
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await verify_proof(
-        claimInfo,
-        signedClaim
+        transformProof(JSON.parse(proof))
       );
       setRicherModalOpen(true);
       setShowRicherButton(false);
@@ -64,7 +106,7 @@ function ProofForm({
                   rows={25}
                   cols={50}
                   onChange={(e) => setProof(e.target.value)}
-                  placeholder={JSON.stringify(claimInfo) + '\n' + JSON.stringify(signedClaim)}
+                  placeholder={JSON.stringify(realProof)}
                   required
                   className="block w-full rounded-md border-0 bg-white/5
                 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10

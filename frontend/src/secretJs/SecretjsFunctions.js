@@ -9,13 +9,8 @@ let contractAddress = "secret1z7v94lkjmhvv58zcqydgwzqp27umdmhgfx27q7";
 const SecretjsFunctions = () => {
   const { secretjs, secretAddress } = useContext(SecretjsContext);
 
-  let verify_proof = async (claimInfo, signedClaim) => {
-    const proof = {
-      claimInfo: claimInfo,
-      signedClaim: signedClaim,
-    }
+  let verify_proof = async (proof) => {
 
-    console.log(proof)
 
     let tx = await secretjs.tx.compute.executeContract(
       {
