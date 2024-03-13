@@ -16,5 +16,6 @@ OWNER= // Your secret address associated with the above mnemonic
 In the same directory:
 
 ```
+npm install
 node all
 ```
