@@ -1,4 +1,4 @@
-# Reclaim Cosmwasm
+# WeCross Cosmwasm
 
 Generate WASM contract for secret chain:
 
